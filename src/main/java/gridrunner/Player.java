@@ -54,6 +54,9 @@ public class Player extends Polygon {
     public void loseLives(){
         lives--;
     }
+    public void getLife(){
+        lives++;
+    }
 
 
     public double getCenterX(){

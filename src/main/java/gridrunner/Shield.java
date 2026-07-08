@@ -1,52 +1,49 @@
 package gridrunner;
 
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Translate;
 
 import java.util.List;
 
-public class Heart extends Polygon {
+public class Shield extends Polygon {
+    private double centerX,centerY,width;
     private Translate position;
-    private double x;
-    private double y;
-    private double size;
-    public Heart ( double size, double centerX, double centerY, Color fillColor, Color strokeColor ) {
-        double[] shape = {
-                0.00, -0.20,
-                0.50, -0.50,
-                0.55,  0.00,
-                0.00,  0.55,
-                -0.55,  0.00,
-                -0.50, -0.50
-        };
+    public Shield(double cx, double cy, double width){
+        super.setFill(Color.BLUE);
+        super.setStroke(Color.DARKBLUE);
+        double angleOffset = 0;
 
-        for ( int i = 0; i < shape.length; i += 2 ) {
-            double x = centerX + shape[i]     * size;
-            double y = centerY + shape[i + 1] * size;
+        for ( int i = 0; i < 6; i++ ) {
+            double angle = angleOffset + i * ( 2 * Math.PI / 6 );
+            double x = width * Math.cos ( angle );
+            double y = width * Math.sin ( angle );
             getPoints ( ).addAll ( x, y );
         }
-        this.x=centerX;
-        this.y=centerY;
-        this.size=size;
-        setFill ( fillColor );
-        setStroke ( strokeColor );
-        setStrokeWidth ( size * 0.03 );
+        this.centerX = cx + width;
+        this.centerY = cy + width;
+
+
+
+        this.position = new Translate( this.centerX, this.centerY );
+        super.getTransforms ( ).addAll (
+                this.position
+        );
     }
 
     public double getX() {
-        return x;
+        return centerX;
     }
 
     public double getY() {
-        return y;
+        return centerY;
     }
 
-    public double getSize() {
-        return size;
+    public double getWidth() {
+        return width;
     }
-
     public void getRandomPos(List<Rectangle> walls){
         boolean corr = false;
         boolean pass = false;
@@ -74,13 +71,11 @@ public class Heart extends Polygon {
             }
             if(pass) corr=true;
         }
-        this.y=cy;
-        this.x=cx;
-        this.position = new Translate( this.x, this.y );
+        this.centerY=cy;
+        this.centerX=cx;
+        this.position = new Translate( this.centerX, this.centerY );
         super.getTransforms ( ).addAll (
                 this.position
         );
-
     }
-
 }

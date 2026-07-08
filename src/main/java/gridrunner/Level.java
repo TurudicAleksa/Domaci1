@@ -15,6 +15,7 @@ public class Level extends Group {
 
     private List<Rectangle> walls;
     private List<Rectangle> trueWalls;
+    private List<SideCannon> cannons;
     private Rectangle goal;
     public double startX, startY;
     private Rectangle start;
@@ -22,6 +23,7 @@ public class Level extends Group {
     public Level ( String map[], double tileSize, Color wallFillColor, Color wallStrokeColor, Color startColor, Color goalColor ) {
         this.walls = new ArrayList<> ( );
         this.trueWalls = new ArrayList<> ( );
+        this.cannons = new ArrayList<>();
 
         for ( int row = 0; row < map.length; row++ ) {
             for ( int column = 0; column < map[row].length ( ); column++ ) {
@@ -87,6 +89,22 @@ public class Level extends Group {
 
                         break;
                     }
+                    case 'W':{
+                        boolean left=false;
+                        if(column==0) left=false;
+                        else if (column==map[row].length()-1) {
+                            left=true;
+                        } else if (map[row].charAt(column-1)=='#' || map[row].charAt(column-1)=='P') {
+                            left=false;
+                        } else left = true;
+                        SideCannon a = new SideCannon(tileSize,tileSize,left);
+                        a.getTransforms ( ).addAll (
+                                new Translate ( positionX, positionY )
+                        );
+                        cannons.add(a);
+                        super.getChildren().add(a);
+                        break;
+                    }
                 }
             }
         }
@@ -94,6 +112,7 @@ public class Level extends Group {
 
     public List<Rectangle> getWalls ( ) { return Collections.unmodifiableList ( this.walls ); }
     public List<Rectangle> getTrueWalls ( ) { return Collections.unmodifiableList ( this.trueWalls ); }
+    public List<SideCannon> getCannons() {return Collections.unmodifiableList(this.cannons);}
 
     public void setOpacity(){
         for(Rectangle wall : walls){

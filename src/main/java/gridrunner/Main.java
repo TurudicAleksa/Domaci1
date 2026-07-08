@@ -9,6 +9,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -125,6 +126,14 @@ public class Main extends Application {
             case 2: sides=8;
             lives=3;
         }
+        List<Pad> pads = new ArrayList<>();
+        pads.add (new Pad (Constants.TILE_SIZE, 420, 300, 0.7, Color.SADDLEBROWN, Color.BLACK ) );
+        pads.add (new Pad (Constants.TILE_SIZE, 420, 100, 1.4, Color.ORANGE, Color.BLACK ) );
+        pads.add (new Pad (Constants.TILE_SIZE, 220, 400, 1.4, Color.ORANGE, Color.BLACK ) );
+        Group padGroup = new Group ();
+        for (Pad p:pads)
+            padGroup.getChildren().add(0,p);
+        root.getChildren().add(padGroup);
         Player player = new Player (
                 Constants.PLAYER_RADIUS,
                 level.getStartX ( ) + Constants.TILE_SIZE / 2. - Constants.PLAYER_RADIUS,
@@ -248,9 +257,23 @@ public class Main extends Application {
         root.getChildren().add(sc);
 
 
+        Circle shd = new Circle(0,0,Constants.PLAYER_RADIUS,Color.BLUE);
+        shd.setOpacity(0);
+        shd.setFill(Color.TRANSPARENT);
+        shd.setStrokeWidth(5);
+        shd.setStroke(Color.BLUE);
+        root.getChildren().add(shd);
+
+
+
+        List<Shield> RShields = new ArrayList<>();
+        List<Heart> RHearts = new ArrayList<>();
+
 
         AnimationTimer timer = new AnimationTimer ( ) {
             private double last;
+            private int immunity=0;
+            private int invinc=0;
             private double timer=0;
             private int seconds=0;
             private int minutes=0;
@@ -260,6 +283,7 @@ public class Main extends Application {
                 if ( this.last == 0 ) {
                     this.last = now;
                 }
+
                 if(input.isDown(KeyCode.R)){
                     double x = level.getStartX ( ) + Constants.TILE_SIZE / 2. ;
                     double y = level.getStartY ( ) + Constants.TILE_SIZE / 2. ;
@@ -269,6 +293,12 @@ public class Main extends Application {
                 double dt = ( now - this.last ) / 10e8;
                 timer+=dt;
                 fan.update(dt);
+                for(SideCannon a:level.getCannons()){
+                    if(seconds%10==0 && !a.inAir) {
+                        a.shoot(root);
+                    }
+                    a.update(root);
+                }
                 if(timer>1)
                 {
                     timer-=1;
@@ -276,6 +306,7 @@ public class Main extends Application {
                     if(seconds%10==0){
                         level.setOpacity();
                         walkable=!walkable;
+
                     }
                     if(seconds>=60){
                         minutes++;
@@ -284,6 +315,20 @@ public class Main extends Application {
                     String formattedSec = String.format("%02d", seconds);
                     String formattedMin = String.format("%02d", minutes);
                     time.setText(formattedMin+":"+formattedSec);
+                    if(invinc>0) invinc--;
+                    double seed = Math.random()*10;
+                    if(seed>9.5){
+                        Shield s = new Shield(0,0,10);
+                        s.getRandomPos(level.getWalls());
+                        RShields.add(s);
+                        root.getChildren().add(s);
+                    }
+                    if(seed<0.5){
+                        Heart h = new Heart(30,0,0,Color.RED,Color.PALEVIOLETRED);
+                        h.getRandomPos(level.getWalls());
+                        RHearts.add(h);
+                        root.getChildren().add(h);
+                    }
                 }
                 this.last = now;
 
@@ -291,6 +336,9 @@ public class Main extends Application {
                     box.setOpacity(1);
                     win.setOpacity(1);
                     box.setStroke(Color.GREENYELLOW);
+                    box.toFront();
+                    win.toFront();
+                    this.stop();
                     return;
                 }
                 if(!cs.isEmpty()){
@@ -305,41 +353,119 @@ public class Main extends Application {
                         }
                     }
                 }
-                for(Enemy a:enemies){
-                    if(player.touches(a.getCenterX(),a.getCenterY(),a.getWidth())){
-                        double x = level.getStartX ( ) + Constants.TILE_SIZE / 2. ;
-                        double y = level.getStartY ( ) + Constants.TILE_SIZE / 2. ;
-                        player.loseLives();
-                        ls.get(ls.size()-1).setOpacity(0);
-                        ls.remove(ls.size()-1);
-                        player.reset(x,y);
+                if(!RShields.isEmpty()){
+                    Iterator<Shield> it = RShields.iterator ( );
+                    while ( it.hasNext ( ) ) {
+                        Shield a = it.next ( );
+                        if ( player.touches ( a.getX ( ), a.getY ( ), 10 ) ) {
+                            immunity=1;
+                            it.remove ();
+                            root.getChildren().remove(a);
+                            shd.setOpacity(1);
+
+                        }
                     }
                 }
+                if(!RHearts.isEmpty()){
+                    Iterator<Heart> it = RHearts.iterator ( );
+                    while ( it.hasNext ( ) ) {
+                        Heart a = it.next ( );
+                        if ( player.touches ( a.getX ( ), a.getY ( ), a.getSize() ) ) {
+                            player.getLife();
+                            it.remove ();
+                            root.getChildren().remove(a);
+                            int i = ls.size()-1;
+                            Heart k = new Heart(30,(i+2)*50+30,20,Color.INDIANRED,Color.PALEVIOLETRED);
+                            ls.add(k);
+                            root.getChildren().add(k);
+                        }
+                    }
+                }
+                if(invinc==0){
+                    for(Enemy a:enemies){
+                        if(player.touches(a.getCenterX(),a.getCenterY(),a.getWidth())){
+                            if(immunity==0) {
+                                double x = level.getStartX() + Constants.TILE_SIZE / 2.;
+                                double y = level.getStartY() + Constants.TILE_SIZE / 2.;
+                                player.loseLives();
+                                ls.get(ls.size() - 1).setOpacity(0);
+                                ls.remove(ls.size() - 1);
+                                player.reset(x, y);
+                            }
+                            else{
+                                immunity=0;
+                                invinc=2;
+                                shd.setOpacity(0);
+                            }
+                        }
+                    }
+                    if(player.touchesBlade(fan.getX(),fan.getY(),fan.getWidth(),fan.getLength(),fan.getRotation())){
+                        if(immunity==0){
+                            double x = level.getStartX ( ) + Constants.TILE_SIZE / 2. ;
+                            double y = level.getStartY ( ) + Constants.TILE_SIZE / 2. ;
+                            player.loseLives();
+                            ls.get(ls.size()-1).setOpacity(0);
+                            ls.remove(ls.size()-1);
+                            player.reset(x,y);
+                        }else{
+                            immunity=0;
+                            invinc=2;
+                            shd.setOpacity(0);
+                        }
 
-                if(player.touchesBlade(fan.getX(),fan.getY(),fan.getWidth(),fan.getLength(),fan.getRotation())){
-                    double x = level.getStartX ( ) + Constants.TILE_SIZE / 2. ;
-                    double y = level.getStartY ( ) + Constants.TILE_SIZE / 2. ;
-                    player.loseLives();
-                    ls.get(ls.size()-1).setOpacity(0);
-                    ls.remove(ls.size()-1);
-                    player.reset(x,y);
+                    }
+                    for(SideCannon a: level.getCannons()){
+                        if(a.getProjectile()==null) break;
+                        double xx = a.getProjectile().getCenterX();
+                        double yy = a.getProjectile().getCenterY();
+                        if(player.touches(xx,yy,10)){
+                            if(immunity==0) {
+                                box.setOpacity(1);
+                                loss.setOpacity(1);
+                                box.setStroke(Color.RED);
+                                box.toFront();
+                                loss.toFront();
+                                this.stop();
+                                return;
+                            }
+                            else{
+                                immunity=0;
+                                invinc=2;
+                                shd.setOpacity(0);
+                            }
+                        }
+                    }
                 }
                 if(player.getLives()==0){
                     box.setOpacity(1);
                     loss.setOpacity(1);
                     box.setStroke(Color.RED);
+                    box.toFront();
+                    loss.toFront();
+                    this.stop();
                     return;
+
+                }
+                double speedMultiplier = 1.0;
+                for ( Pad pad : pads ) {
+                    if ( player.touches ( pad.getCenterX ( ), pad.getCenterY ( ), pad.getSize ( ) ) ) {
+                        speedMultiplier = pad.getSpeedMultiplier ( );
+                        break;
+                    }
+
                 }
                 if(walkable){
-                    player.update ( dt, speed, input, level.getTrueWalls ( ) );
+                    player.update ( dt, speed*speedMultiplier, input, level.getTrueWalls ( ) );
                     for(Enemy a:enemies)
                         a.update(level.getTrueWalls ( ));
                 }
                 else {
-                    player.update ( dt, speed, input, level.getWalls ( ) );
+                    player.update ( dt, speed*speedMultiplier, input, level.getWalls ( ) );
                     for(Enemy a:enemies)
                         a.update(level.getWalls ( ));
                 }
+                shd.setCenterX(player.getCenterX());
+                shd.setCenterY(player.getCenterY());
             }
         };
         timer.start ( );
