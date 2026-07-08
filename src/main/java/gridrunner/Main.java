@@ -1,5 +1,6 @@
 package gridrunner;
 
+
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Group;
@@ -13,22 +14,98 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public class Main extends Application {
-
+    int score=0;
+    int level=0;
+    int player=0;
+    enum GameState { PLAYER_SELECT, LEVEL_SELECT, PLAYING }
     @Override
     public void start ( Stage stage ) {
-        Group root = new Group ( );
-        int lives=3;
+        final GameState[] state = {GameState.PLAYER_SELECT};
+        Group root = new Group();
+        Scene scene = new Scene(root, Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT);
+
+        SelectionScreen playerSelect = new SelectionScreen(
+                "Choose Your Player",
+                Arrays.asList("Triangle", "Square", "Octagon"),
+                Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT
+        );
+        root.getChildren().add(playerSelect);
+        final int[] chosenPlayerType = {0};
+        final int[] chosenLevel = {0};
+        scene.setOnKeyReleased(ReleaseEvent -> {
+            KeyCode code = ReleaseEvent.getCode();
+            if (state[0] == GameState.PLAYER_SELECT) {
+                if (code == KeyCode.ENTER || code == KeyCode.SPACE) {
+                    chosenPlayerType[0] = playerSelect.getSelectedIndex();
+                    root.getChildren().remove(playerSelect);
+
+                    SelectionScreen levelSelect = new SelectionScreen(
+                            "Choose Your Level",
+                            Arrays.asList("Level 1", "Level 2", "Level 3"),
+                            Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT
+                    );
+                    root.getChildren().add(levelSelect);
+                    state[0] = GameState.LEVEL_SELECT;
+
+                    // Swap key handler to control the level screen now
+                    scene.setOnKeyPressed(levelEvent -> {
+                        KeyCode levelCode = levelEvent.getCode();
+                        if (levelCode == KeyCode.ENTER || levelCode == KeyCode.SPACE) {
+                            chosenLevel[0] = levelSelect.getSelectedIndex();
+                            root.getChildren().remove(levelSelect);
+                            state[0] = GameState.PLAYING;
+                            System.out.println(chosenLevel[0]);
+                            startGame(stage, root, scene, chosenPlayerType[0], chosenLevel[0]);
+                        } else {
+                            levelSelect.handleKey(levelCode);
+                        }
+                    });
+                } else {
+                    playerSelect.handleKey(code);
+                }
+            }
+        });
+        stage.setTitle ( "Do cilja" );
+        stage.setScene ( scene );
+        stage.setResizable ( false );
+        stage.show ( );
+        //int score=0;
+    }
+    double speed=Constants.PLAYER_SPEED;
+    public void startGame(Stage stage, Group root, Scene scene, int playerType, int levelIndex){
         Input input = new Input();
+        int sides=3;
+        int lives =3;
+        double fanX=0;
+        double fanY=0;
+        System.out.println(levelIndex);
         Image bgImage = new Image ( getClass ( ).getResourceAsStream ( "/img/ground.jpg" ) );
         ImageView background = new ImageView ( bgImage );
         background.setFitWidth ( Constants.WINDOW_WIDTH );
         background.setFitHeight ( Constants.WINDOW_HEIGHT );
         root.getChildren ( ).add ( background );
-        Level level = new Level (
-                Constants.MAP,
+        String[] lvl=Constants.MAP;
+        switch(levelIndex){
+            case 0: lvl=Constants.MAP;
+                fanX=650;
+                fanY=200;
+            break;
+            case 1: lvl=Constants.MAP2;
+                fanX=365;
+                fanY=270;
+            break;
+            case 2: lvl=Constants.MAP3;
+                fanX=Constants.WINDOW_WIDTH/2;
+                fanY=Constants.WINDOW_HEIGHT/2;
+        }
+
+        Level level = new Level(
+                lvl,
                 Constants.TILE_SIZE,
                 Constants.WALL_FILL_COLOR,
                 Constants.WALL_STROKE_COLOR,
@@ -36,29 +113,73 @@ public class Main extends Application {
                 Constants.GOAL_COLOR
         );
         root.getChildren ( ).add ( level );
-
+        switch(playerType){
+            case 0: sides=3;
+            lives=2;
+            speed=speed*1.4;
+            break;
+            case 1: sides=4;
+            lives=4;
+            speed=speed*0.75;
+            break;
+            case 2: sides=8;
+            lives=3;
+        }
         Player player = new Player (
-               Constants.PLAYER_RADIUS,
-               level.getStartX ( ) + Constants.TILE_SIZE / 2. - Constants.PLAYER_RADIUS,
-               level.getStartY ( ) + Constants.TILE_SIZE / 2. - Constants.PLAYER_RADIUS,
-               8,
-               Constants.PLAYER_FILL_COLOR,
-               Constants.PLAYER_STROKE_COLOR
+                Constants.PLAYER_RADIUS,
+                level.getStartX ( ) + Constants.TILE_SIZE / 2. - Constants.PLAYER_RADIUS,
+                level.getStartY ( ) + Constants.TILE_SIZE / 2. - Constants.PLAYER_RADIUS,
+                sides,
+                lives,
+                Constants.PLAYER_FILL_COLOR,
+                Constants.PLAYER_STROKE_COLOR
         );
         root.getChildren ( ).add ( player );
+        Group ens = new Group();
+        List<Enemy> enemies = new ArrayList<>();
+        if(levelIndex==2){
+            for(int i=0;i<9;i++){
+                Enemy a =new Enemy(
+                        Constants.TILE_SIZE-10,
+                        100+i*70,
+                        60+i*50,
+                        Color.RED,
+                        Color.DARKRED
+                );
+                Enemy b = new Enemy(
+                        Constants.TILE_SIZE-10,
+                        100+i*70,
+                        Constants.WINDOW_HEIGHT-i*50-70,
+                        Color.RED,
+                        Color.DARKRED
+                );
+                a.setSpeed(3);
+                b.setSpeed(3);
+                b.setStartDir(-1);
+                enemies.add(a);
+                enemies.add(b);
+                ens.getChildren().add(a);
+                ens.getChildren().add(b);
+            }
+        }
+        else{
+            Enemy enemy = new Enemy(
+                    Constants.TILE_SIZE-10,
+                    200*levelIndex+100,
+                    150*levelIndex+150,
+                    Color.RED,
+                    Color.DARKRED
+            );
+            enemy.setSpeed(1);
+            enemies.add(enemy);
+            ens.getChildren().add(enemy);
+        }
 
-        Enemy enemy = new Enemy(
-                Constants.TILE_SIZE-10,
-                200,
-                300,
-                Color.RED,
-                Color.DARKRED
-        );
-        Fan fan = new Fan(650,200,150,10,Color.PURPLE);
+        Fan fan = new Fan(fanX,fanY,100*levelIndex+150,10,Color.PURPLE);
         fan.setSpeed(Constants.PLAYER_SPEED);
         root.getChildren().add(fan);
-        enemy.setSpeed(1);
-        root.getChildren().add(enemy);
+
+        root.getChildren().add(ens);
 
         Rectangle box = new Rectangle(600,300,Color.GRAY);
         box.setX(Constants.WINDOW_WIDTH/8);
@@ -86,16 +207,26 @@ public class Main extends Application {
         Group liv = new Group();
         List<Heart> ls= new ArrayList<>();
         for(int i=player.getLives();i>0;i--){
-            ls.add(new Heart(30,i*50,20,Color.INDIANRED,Color.PALEVIOLETRED));
+            ls.add(new Heart(30,i*50+30,20,Color.INDIANRED,Color.PALEVIOLETRED));
         }
         for(Heart i:ls){
             liv.getChildren().add(i);
         }
         root.getChildren().add(liv);
 
-        Scene scene = new Scene ( root, Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT );
 
-       // scene.setFill ( Constants.BACKGROUND_COLOR );
+        Group coins = new Group();
+        List<Coin> cs = new ArrayList<>();
+        for(int i=0;i<2;i++){
+            Coin a = new Coin(0,0);
+            a.getRandomPos(level.getWalls());
+            cs.add(a);
+            coins.getChildren().add(a);
+        }
+        root.getChildren().add(coins);
+
+
+        // scene.setFill ( Constants.BACKGROUND_COLOR );
 
         scene.setOnKeyPressed ( input::keyPressed );
         scene.setOnKeyReleased ( input::keyReleased );
@@ -107,6 +238,17 @@ public class Main extends Application {
         time.setScaleY(3.0);
         time.setFill(Color.WHITE);
         root.getChildren().add(time);
+
+        Text sc= new Text("0");
+        sc.setX(15);
+        sc.setY(25);
+        sc.setScaleX(2.0);
+        sc.setScaleY(2.0);
+        sc.setFill(Color.WHITE);
+        root.getChildren().add(sc);
+
+
+
         AnimationTimer timer = new AnimationTimer ( ) {
             private double last;
             private double timer=0;
@@ -151,7 +293,30 @@ public class Main extends Application {
                     box.setStroke(Color.GREENYELLOW);
                     return;
                 }
-                if(player.touches(enemy.getCenterX(),enemy.getCenterY(),enemy.getWidth())){
+                if(!cs.isEmpty()){
+                    Iterator<Coin> it = cs.iterator ( );
+                    while ( it.hasNext ( ) ) {
+                        Coin a = it.next ( );
+                        if ( player.touches ( a.getX ( ), a.getY ( ), 7 ) ) {
+                            score++;
+                            it.remove ();
+                            coins.getChildren().remove(a);
+                            sc.setText (String.valueOf(score));
+                        }
+                    }
+                }
+                for(Enemy a:enemies){
+                    if(player.touches(a.getCenterX(),a.getCenterY(),a.getWidth())){
+                        double x = level.getStartX ( ) + Constants.TILE_SIZE / 2. ;
+                        double y = level.getStartY ( ) + Constants.TILE_SIZE / 2. ;
+                        player.loseLives();
+                        ls.get(ls.size()-1).setOpacity(0);
+                        ls.remove(ls.size()-1);
+                        player.reset(x,y);
+                    }
+                }
+
+                if(player.touchesBlade(fan.getX(),fan.getY(),fan.getWidth(),fan.getLength(),fan.getRotation())){
                     double x = level.getStartX ( ) + Constants.TILE_SIZE / 2. ;
                     double y = level.getStartY ( ) + Constants.TILE_SIZE / 2. ;
                     player.loseLives();
@@ -166,12 +331,14 @@ public class Main extends Application {
                     return;
                 }
                 if(walkable){
-                    player.update ( dt, Constants.PLAYER_SPEED, input, level.getTrueWalls ( ) );
-                    enemy.update(level.getTrueWalls ( ));
+                    player.update ( dt, speed, input, level.getTrueWalls ( ) );
+                    for(Enemy a:enemies)
+                        a.update(level.getTrueWalls ( ));
                 }
                 else {
-                    player.update ( dt, Constants.PLAYER_SPEED, input, level.getWalls ( ) );
-                    enemy.update(level.getWalls ( ));
+                    player.update ( dt, speed, input, level.getWalls ( ) );
+                    for(Enemy a:enemies)
+                        a.update(level.getWalls ( ));
                 }
             }
         };
@@ -182,6 +349,7 @@ public class Main extends Application {
         stage.setResizable ( false );
         stage.show ( );
     }
+
 
     public static void main ( String[] args ) {
         launch ( args );

@@ -10,8 +10,28 @@ public class Fan extends Group {
     private Rectangle blade;
     private double rotation;
     private double speed=50;
+    private double width;
+    private double length;
+    private double x;
+    private double y;
 
+    public double getX(){
+        return this.x;
+
+    }
+    public double getY(){
+        return this.y;
+    }
+    public double getLength()
+    {
+        return length;
+    }
+    public double getWidth(){
+        return width;
+    }
     public Fan(double centerX, double centerY, double length, double width, Color color){
+        this.x=centerX;
+        this.y=centerY;
         center = new Rectangle(30,30,color);
         center.setTranslateX ( centerX - 30 / 2 );
         center.setTranslateY ( centerY - 30 / 2 );
@@ -21,7 +41,8 @@ public class Fan extends Group {
         blade.setTranslateX ( centerX - width / 2 );
         blade.setTranslateY ( centerY - length / 2 );
         blade.setStroke(Color.MEDIUMPURPLE);
-
+        this.length=length;
+        this.width=width;
         getChildren ( ).addAll ( blade, center );
     }
     public void setSpeed(double p){

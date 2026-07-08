@@ -11,7 +11,9 @@ public class Enemy extends Rectangle {
     private Translate position;
     private double centerX, centerY, radius,speed;
     private int dir=1;
-
+    public void setStartDir(int d){
+        dir=d;
+    }
     public double getCenterX() {
         return centerX+radius/2;
     }

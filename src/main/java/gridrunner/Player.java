@@ -14,11 +14,11 @@ public class Player extends Polygon {
     private Translate position;
     private double centerX, centerY, radius;
     private int lives = 3;
-    public Player ( double radius, double positionX, double positionY, int sides, Color fillColor, Color strokeColor ) {
+    public Player ( double radius, double positionX, double positionY, int sides,int lives, Color fillColor, Color strokeColor ) {
         this.centerX = 0;
         this.centerY = 0;
         this.radius  = radius;
-
+        this.lives=lives;
         double angleOffset = 0;
 
         for ( int i = 0; i < sides; i++ ) {
@@ -160,5 +160,28 @@ public class Player extends Polygon {
         double dy = this.centerY - closestY;
 
         return dx * dx + dy * dy <= this.radius * this.radius;
+    }
+    public boolean touchesBlade( double rectCenterX, double rectCenterY,
+                                    double width, double height, double angleDegrees ) {
+
+        double dx = this.centerX - rectCenterX;
+        double dy = this.centerY - rectCenterY;
+
+        double angleRad = Math.toRadians ( -angleDegrees );
+        double localX = dx * Math.cos ( angleRad ) - dy * Math.sin ( angleRad );
+        double localY = dx * Math.sin ( angleRad ) + dy * Math.cos ( angleRad );
+
+        double left  = -width  / 2;
+        double right =  width  / 2;
+        double up    = -height / 2;
+        double down  =  height / 2;
+
+        double closestX = Math.max ( left, Math.min ( localX, right ) );
+        double closestY = Math.max ( up,   Math.min ( localY, down ) );
+
+        double distX = localX - closestX;
+        double distY = localY - closestY;
+
+        return distX * distX + distY * distY <= this.radius * this.radius;
     }
 }
