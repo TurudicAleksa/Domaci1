@@ -66,7 +66,6 @@ public class SelectionScreen extends Group {
             selectedIndex = ( selectedIndex + 1 ) % options.size ( );
             updateSelectionVisuals ( );
         }
-        // Also allow direct number-key selection (1, 2, 3)
         else if ( code == KeyCode.DIGIT1 && options.size ( ) > 0 ) { selectedIndex = 0; updateSelectionVisuals ( ); }
         else if ( code == KeyCode.DIGIT2 && options.size ( ) > 1 ) { selectedIndex = 1; updateSelectionVisuals ( ); }
         else if ( code == KeyCode.DIGIT3 && options.size ( ) > 2 ) { selectedIndex = 2; updateSelectionVisuals ( ); }

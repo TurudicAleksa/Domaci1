@@ -69,5 +69,5 @@ public class Constants {
     public static final Color PLAYER_STROKE_COLOR = Color.web ( "#1133aa" );
 
     public static final double PLAYER_RADIUS = Constants.TILE_SIZE * 0.75 / 2;
-    public static final double PLAYER_SPEED  = 180; // pixels per second
+    public static final double PLAYER_SPEED  = 180;
 }

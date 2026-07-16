@@ -53,7 +53,7 @@ public class Main extends Application {
                     root.getChildren().add(levelSelect);
                     state[0] = GameState.LEVEL_SELECT;
 
-                    // Swap key handler to control the level screen now
+                    
                     scene.setOnKeyPressed(levelEvent -> {
                         KeyCode levelCode = levelEvent.getCode();
                         if (levelCode == KeyCode.ENTER || levelCode == KeyCode.SPACE) {
@@ -75,7 +75,7 @@ public class Main extends Application {
         stage.setScene ( scene );
         stage.setResizable ( false );
         stage.show ( );
-        //int score=0;
+
     }
     double speed=Constants.PLAYER_SPEED;
     public void startGame(Stage stage, Group root, Scene scene, int playerType, int levelIndex){
@@ -235,7 +235,7 @@ public class Main extends Application {
         root.getChildren().add(coins);
 
 
-        // scene.setFill ( Constants.BACKGROUND_COLOR );
+
 
         scene.setOnKeyPressed ( input::keyPressed );
         scene.setOnKeyReleased ( input::keyReleased );

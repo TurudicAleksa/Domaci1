@@ -64,7 +64,7 @@ public class Enemy extends Rectangle {
         }
         if ( !clear ) {
             this.centerY += (dir*dy);
-            //dir=dir*(-1);
+
         }
 
         this.position.setY ( this.centerY );

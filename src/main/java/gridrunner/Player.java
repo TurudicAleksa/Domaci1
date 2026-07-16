@@ -82,14 +82,14 @@ public class Player extends Polygon {
         if ( input.up ( ) )    { dy -= speed * dt; }
         if ( input.down ( ) )  { dy += speed * dt; }
 
-        // Keep consistent speed on diagonals
+
         if ( dx != 0 && dy != 0 ) {
             double factor = 1.0 / Math.sqrt(2.0);
             dx *= factor;
             dy *= factor;
         }
 
-        // Resolve each axis independently to allow sliding along walls
+
         this.moveAndResolve ( dx, 0, walls );
         this.moveAndResolve ( 0, dy, walls );
     }
